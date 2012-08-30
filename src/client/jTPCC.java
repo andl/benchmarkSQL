@@ -56,10 +56,13 @@ public class jTPCC implements jTPCCConfig {
 	private final int numberOfReplicas;
 
 	private boolean writeStandardOutToFile;
-	
+
+	//factor
+	private float factor;
+
 	/**
 	 * Start benchmarksql benchmark.
-	 * 
+	 *
 	 * @param args
 	 *            <ul>
 	 *            <li>-w: The number of warehouses to use in the benchmark (default=1)</li>
@@ -72,6 +75,7 @@ public class jTPCC implements jTPCCConfig {
 	 *            <li>-m: Number of minutes to execute the benchmark for (default=1).</li>
 	 *            <li>-silent: Use this to disable messages to System.out for every set of rows inserted.</li>
 	 *            <li>-stdout: Write standard out to file (takes up Mb of disk space for each run).</li>
+	 *            <li>-f: factor less than one, so we can have smaller test.</li>
 	 *            </ul>
 	 */
 	public static void main(String args[]) {
@@ -81,8 +85,9 @@ public class jTPCC implements jTPCCConfig {
 		int numTerminals = 1;
 		int minutesToExecute = 1;
 		int numberOfReplicas = -1;
+		float factor = 1.0f;
 		boolean writeStandardOutToFile = true;
-		
+
 		for (int i = 0; i < args.length; i++) {
 			String str = args[i];
 			if (str.toLowerCase().startsWith("-w")) { // number of warehouses.
@@ -113,13 +118,19 @@ public class jTPCC implements jTPCCConfig {
 			} else if (str.toLowerCase().startsWith("-r")) { // number of minutes to execute transactions for.
 
 				numberOfReplicas = Integer.parseInt(args[i].substring("-r".length()));
-			} else if (str.toLowerCase().startsWith("-stdout")) { // number of minutes to execute transactions for.
+			} else if (str.toLowerCase().startsWith("-f")) { // number of minutes to execute transactions for.
+
+				factor = Float.parseFloat(args[i].substring("-f".length()));
+				if (factor > 1) {
+					factor = 1.0f;
+				}
+			}else if (str.toLowerCase().startsWith("-stdout")) { // number of minutes to execute transactions for.
 
 				writeStandardOutToFile = true;
 		}
 		}
 
-		jTPCC benchmark = new jTPCC(logFileLocation, numWarehouses, numTerminals, minutesToExecute, numberOfReplicas, writeStandardOutToFile);
+		jTPCC benchmark = new jTPCC(logFileLocation, numWarehouses, numTerminals, minutesToExecute, numberOfReplicas, writeStandardOutToFile, factor);
 
 		try {
 			benchmark.run();
@@ -129,8 +140,10 @@ public class jTPCC implements jTPCCConfig {
 		}
 	}
 
-	public jTPCC(String logFileLocation, int numWarehouses, int numTerminals, int minutes, int numberOfReplicas, boolean writeStandardOutToFile) {
+	public jTPCC(String logFileLocation, int numWarehouses, int numTerminals, int minutes, int numberOfReplicas, boolean writeStandardOutToFile,
+			float factor) {
 
+		this.factor = factor;
 		this.numWarehouses = numWarehouses;
 		this.numTerminals = numTerminals;
 		this.minutes = minutes;
@@ -168,6 +181,8 @@ public class jTPCC implements jTPCCConfig {
 		orderStatusWeight = defaultOrderStatusWeight;
 		deliveryWeight = defaultDeliveryWeight;
 		stockLevelWeight = defaultStockLevelWeight;
+
+
 
 	}
 
@@ -371,7 +386,9 @@ public class jTPCC implements jTPCCConfig {
 					int terminalDistrictID;
 					do {
 						terminalWarehouseID = (int) randomNumber(1, numWarehouses);
-						terminalDistrictID = (int) randomNumber(1, 10);
+            int distPerWhse = (int)(configDistPerWhse * factor);
+            if(distPerWhse < 1) {distPerWhse = 1;}
+						terminalDistrictID = (int) randomNumber(1, distPerWhse);
 					} while (usedTerminals[terminalWarehouseID - 1][terminalDistrictID - 1] == 1);
 					usedTerminals[terminalWarehouseID - 1][terminalDistrictID - 1] = 1;
 
@@ -383,7 +400,7 @@ public class jTPCC implements jTPCCConfig {
 
 					jTPCCTerminal terminal = new jTPCCTerminal(terminalName, terminalWarehouseID, terminalDistrictID, conn,
 							transactionsPerTerminal, normalOutput, debugMessages, paymentWeight, orderStatusWeight, deliveryWeight,
-							stockLevelWeight, numWarehouses, this, errorOutput, writeStandardOutToFile);
+							stockLevelWeight, numWarehouses, this, errorOutput, writeStandardOutToFile,factor);
 					terminals[i] = terminal;
 					terminalNames[i] = terminalName;
 					printMessage(terminalName + "\t" + terminalWarehouseID);

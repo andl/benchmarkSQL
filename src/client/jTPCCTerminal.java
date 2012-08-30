@@ -76,9 +76,14 @@ public class jTPCCTerminal implements jTPCCConfig, Runnable {
 	private OutputStream normalOutput;
 	private final boolean writeStandardOutToFile;
 
+	// factor
+	private float factor = 1.0f;
+
 	public jTPCCTerminal(String terminalName, int terminalWarehouseID, int terminalDistrictID, Connection conn, int numTransactions,
 			OutputStream terminalOutput, boolean debugMessages, int paymentWeight, int orderStatusWeight, int deliveryWeight,
-			int stockLevelWeight, int numWarehouses, jTPCC parent, OutputStream errorOutput, boolean writeStandardOutToFile) throws SQLException {
+			int stockLevelWeight, int numWarehouses, jTPCC parent, OutputStream errorOutput, boolean writeStandardOutToFile,
+			float factor
+			) throws SQLException {
 		this.terminalName = terminalName;
 		this.conn = conn;
 		this.writeStandardOutToFile = writeStandardOutToFile;
@@ -104,6 +109,7 @@ public class jTPCCTerminal implements jTPCCConfig, Runnable {
 		this.newOrderCounter = 0;
 		terminalMessage("Terminal \'" + terminalName + "\' has WarehouseID=" + terminalWarehouseID + " and DistrictID="
 				+ terminalDistrictID + ".");
+		this.factor = factor;
 	}
 
 	public void run() {
@@ -189,10 +195,13 @@ public class jTPCCTerminal implements jTPCCConfig, Runnable {
 	private int executeTransaction(int transaction) {
 		int result = 0;
 
+		int distPerWhse = (int)(configDistPerWhse * factor);
+		if(distPerWhse < 1) {distPerWhse = 1;}
+
 		switch (transaction) {
 		case NEW_ORDER:
-			int districtID = jTPCCUtil.randomNumber(1, configDistPerWhse, gen);
-			int customerID = jTPCCUtil.getCustomerID(gen);
+			int districtID = jTPCCUtil.randomNumber(1, distPerWhse, gen);
+			int customerID = jTPCCUtil.getCustomerID(gen, factor);
 
 			int numItems = (int) jTPCCUtil.randomNumber(5, 15, gen);
 			int[] itemIDs = new int[numItems];
@@ -200,7 +209,7 @@ public class jTPCCTerminal implements jTPCCConfig, Runnable {
 			int[] orderQuantities = new int[numItems];
 			int allLocal = 1;
 			for (int i = 0; i < numItems; i++) {
-				itemIDs[i] = jTPCCUtil.getItemID(gen);
+				itemIDs[i] = jTPCCUtil.getItemID(gen, factor);
 				if (jTPCCUtil.randomNumber(1, 100, gen) > 1) {
 					supplierWarehouseIDs[i] = terminalWarehouseID;
 				} else {
@@ -222,7 +231,7 @@ public class jTPCCTerminal implements jTPCCConfig, Runnable {
 			break;
 
 		case PAYMENT:
-			districtID = jTPCCUtil.randomNumber(1, 10, gen);
+			districtID = jTPCCUtil.randomNumber(1, distPerWhse, gen);
 
 			int x = jTPCCUtil.randomNumber(1, 100, gen);
 			int customerDistrictID;
@@ -231,7 +240,7 @@ public class jTPCCTerminal implements jTPCCConfig, Runnable {
 				customerDistrictID = districtID;
 				customerWarehouseID = terminalWarehouseID;
 			} else {
-				customerDistrictID = jTPCCUtil.randomNumber(1, 10, gen);
+				customerDistrictID = jTPCCUtil.randomNumber(1, distPerWhse, gen);
 				do {
 					customerWarehouseID = jTPCCUtil.randomNumber(1, numWarehouses, gen);
 				} while (customerWarehouseID == terminalWarehouseID && numWarehouses > 1);
@@ -249,7 +258,7 @@ public class jTPCCTerminal implements jTPCCConfig, Runnable {
 			// } else {
 			// // 40% lookups by customer ID
 			customerByName = false;
-			customerID = jTPCCUtil.getCustomerID(gen);
+			customerID = jTPCCUtil.getCustomerID(gen, factor);
 			// }
 
 			float paymentAmount = (float) (jTPCCUtil.randomNumber(100, 500000, gen) / 100.0);
@@ -267,7 +276,7 @@ public class jTPCCTerminal implements jTPCCConfig, Runnable {
 			break;
 
 		case ORDER_STATUS:
-			districtID = jTPCCUtil.randomNumber(1, 10, gen);
+			districtID = jTPCCUtil.randomNumber(1, distPerWhse, gen);
 
 			y = jTPCCUtil.randomNumber(1, 100, gen);
 			customerLastName = null;
@@ -277,7 +286,7 @@ public class jTPCCTerminal implements jTPCCConfig, Runnable {
 				customerLastName = jTPCCUtil.getLastName(gen);
 			} else {
 				customerByName = false;
-				customerID = jTPCCUtil.getCustomerID(gen);
+				customerID = jTPCCUtil.getCustomerID(gen, factor);
 			}
 
 			terminalMessage("\nStarting transaction #" + transactionCount + " (Order-Status)...");

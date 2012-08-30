@@ -7,7 +7,7 @@
  ***************************************************************************************
  *  Version 2.3.3 Scott Martin/IBM -  DB2 support for TRUNCATE TABLE IMMEDIATE added.
  *    Previously provided by patch 2983892 (Troels Arvin)
- *    IMMEDIATE keyword not needed if DB2_COMPATIBILITY_VECTOR regvar set appropriately (V9.7) , but can't assume this 
+ *    IMMEDIATE keyword not needed if DB2_COMPATIBILITY_VECTOR regvar set appropriately (V9.7) , but can't assume this
  */
 
 import java.sql.*;
@@ -47,10 +47,11 @@ public class LoadData implements jTPCCConfig {
 	private static String hotStart = "false";
 	private static boolean silent = false;
 	private static int numberOfReplicas;
+	private static float scale = 1.0f;
 
 	/**
 	 * Load data into the database, needed to run the benchmark with {@link jTPCC}.
-	 * 
+	 *
 	 * @param args
 	 *            <ul>
 	 *            <li>-w: The number of warehouses to use in the benchmark (default=1)</li>
@@ -62,6 +63,7 @@ public class LoadData implements jTPCCConfig {
 	 *            because the first operation will be slower than subsequent operations.</li>
 	 *            <li>-m: Number of minutes to execute the benchmark for (default=1).</li>
 	 *            <li>-silent: Use this to disable messages to System.out for every set of rows inserted.</li>
+	 *            <li>-f: factor less than 1, so we can load smaller data than tpcc.</li>
 	 *            </ul>
 	 */
 	public static void main(String[] args) {
@@ -96,6 +98,12 @@ public class LoadData implements jTPCCConfig {
 			} else if (str.toLowerCase().startsWith("-r")) { // number of minutes to execute transactions for.
 
 				numberOfReplicas = Integer.parseInt(args[i].substring("-r".length()));
+			} else if (str.toLowerCase().startsWith("-f")) {
+				scale = Float.parseFloat(args[i].substring("-f".length()));
+        // a safe guard
+        if (scale > 1.0f){
+          scale = 1.0f;
+        }
 			}
 
 		}
@@ -126,11 +134,15 @@ public class LoadData implements jTPCCConfig {
 		lastTimeMS = startTimeMS;
 
 		long totalRows = loadWhse(numWarehouses);
-		totalRows += loadItem(configItemCount);
-		totalRows += loadStock(numWarehouses, configItemCount);
-		totalRows += loadDist(numWarehouses, configDistPerWhse);
-		totalRows += loadCust(numWarehouses, configDistPerWhse, configCustPerDist);
-		totalRows += loadOrder(numWarehouses, configDistPerWhse, configCustPerDist);
+    int itemCount = factorize(configItemCount, scale);
+    int distPerWhse = factorize(configDistPerWhse, scale);
+    int custPerDist = factorize(configCustPerDist, scale);
+
+		totalRows += loadItem(itemCount);
+		totalRows += loadStock(numWarehouses, itemCount);
+		totalRows += loadDist(numWarehouses, distPerWhse);
+		totalRows += loadCust(numWarehouses, distPerWhse, custPerDist);
+		totalRows += loadOrder(numWarehouses, distPerWhse, custPerDist);
 
 		long runTimeMS = (new java.util.Date().getTime()) + 1 - startTimeMS;
 		endDate = new java.util.Date();
@@ -1133,4 +1145,15 @@ public class LoadData implements jTPCCConfig {
 
 	} // end loadOrder()
 
+  static int factorize(int items, float factor, int safe) {
+    int result = (int) (items * factor);
+    if (result < safe){
+      result = safe;
+    }
+    return result;
+  }
+
+  public static int factorize(int items, float factor){
+    return factorize(items, factor, 1);
+  }
 } // end LoadData Class

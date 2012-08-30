@@ -71,10 +71,24 @@ public class jTPCCUtil implements jTPCCConfig
     {
         return nonUniformRandom(8191, 1, 100000, r);
     }
+    
+    public static int getItemID(Random r, float factor)
+    {
+    	int max = (int) (configItemCount * factor);
+    	if (max < 1) { max = 1;}
+        return nonUniformRandom((int)(max * 0.082), 1, max, r);
+    }
 
     public static int getCustomerID(Random r)
     {
         return nonUniformRandom(1023, 1, 3000, r);
+    }
+    
+    public static int getCustomerID(Random r, float factor)
+    {
+    	int max = (int)(configCustPerDist * factor);
+    	if (max < 1) { max = 1;}
+        return nonUniformRandom((int)(max * 0.3), 1, max, r);
     }
 
     public static String getLastName(Random r)
