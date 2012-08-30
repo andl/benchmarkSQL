@@ -1,5 +1,5 @@
 echo -n "Total Tnx:"
-ttnx=`cat benchmark-results/2012-08-30-00-46-13/normal.txt | grep Term- | grep -v "Loading database driver" | less | wc -l`
+ttnx=`cat $1/normal.txt | grep Term- | grep -v "Loading database driver" | less | wc -l`
 echo $ttnx
 echo "TnxName TotalRT AvgRT TotalNum TnxWeight%"
 cat $1/normal.txt  | grep Term- | grep -v "Loading database driver" | sed s/Term-/\\nTerm-/g| awk '{print $2,$3}' | awk -v ttnx=$ttnx '{S[$1]=S[$1]+$2} {++C[$1]} END {for(a in S) print a,S[a],S[a]/C[a],C[a], C[a]/ttnx*100}' | egrep 'Payment|Delivery|Order|Stock'  | sort
