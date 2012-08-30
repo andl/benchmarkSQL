@@ -988,7 +988,7 @@ public class jTPCCTerminal implements jTPCCConfig, Runnable {
 
 		} finally {
 			try {
-				terminalMessage("Performing ROLLBACK in NEW-ORDER Txn...");
+				terminalMessage("Performing ROLLBACK in NEW-ORDER Txn...\n");
 				transRollback();
 				if (stmtInsertOrderLine != null)
 					stmtInsertOrderLine.clearBatch();
