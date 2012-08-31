@@ -444,26 +444,28 @@ public class jTPCCTerminal implements jTPCCConfig, Runnable {
 						}
 						delivDeleteOrderLines.setInt(1, no_o_id);
 						result = delivDeleteOrderLines.executeUpdate();
+
 						if (result > 0) {
-							terminalMessage("Clean up "+ result + " order_lines belongs to order "+ no_o_id);
+							terminalMessage("Clean up "+ result + " order_lines belongs to order "+ no_o_id + "\n");
 						}else {
-							terminalMessage("Failed to cleanup order_lines belongs to order "+ no_o_id);
+							terminalMessage("Failed to cleanup order_lines belongs to order "+ no_o_id + "\n");
 						}
-							
+
 						if(delivDeleteOOrder == null){
 							delivDeleteOOrder = conn.prepareStatement(
 									"DELETE FROM oorder " +
 									"WHERE o_id = ?");
 						}
 						delivDeleteOOrder.setInt(1, no_o_id);
-						result = delivDeleteOrderLines.executeUpdate();
+						result = delivDeleteOOrder.executeUpdate();
+
 						if (result > 0) {
-							terminalMessage("Clean up order "+ no_o_id);
+							terminalMessage("Clean up order "+ no_o_id + "\n");
 						}else {
-							terminalMessage("Failed to cleanup order "+ no_o_id);
+							terminalMessage("Failed to cleanup order "+ no_o_id + "\n");
 						}
 					}
-							
+
 					if (result == 0)
 						throw new Exception("C_ID=" + c_id + " C_W_ID=" + w_id + " C_D_ID=" + d_id + " not found!");
 				}

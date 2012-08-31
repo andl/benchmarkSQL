@@ -3,6 +3,5 @@
 # Package Files #
 *.war
 *.ear
-build
-dist
+target
 benchmark-results

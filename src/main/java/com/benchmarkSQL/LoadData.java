@@ -148,7 +148,8 @@ public class LoadData implements jTPCCConfig {
 		long runTimeMS = (new java.util.Date().getTime()) + 1 - startTimeMS;
 		endDate = new java.util.Date();
 		int runTime = (int) runTimeMS / 1000;
-		long rowsLoadedPerSecond = totalRows / (runTimeMS / 1000);
+
+		long rowsLoadedPerSecond = (long) (totalRows / (((float) runTimeMS )/ 1000));
 
 		if (!silent) {
 			System.out.println("");
