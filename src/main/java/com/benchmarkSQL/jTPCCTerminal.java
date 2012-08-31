@@ -304,7 +304,7 @@ public class jTPCCTerminal implements jTPCCConfig, Runnable {
 			terminalMessage("\nStarting transaction #" + transactionCount + " (Delivery)...");
 			// for smaller scale test, we'd like to delete some of the order record after delivery.
 			// use factor to control the possibility. Example, factor = 0.1 means 90% of order will be removed.
-			Boolean cleanup = false;
+			boolean cleanup = false;
 			if (gen.nextDouble() > factor) { cleanup = true; }
 			result = deliveryTransaction(terminalWarehouseID, orderCarrierID, cleanup);
 			break;
@@ -318,7 +318,7 @@ public class jTPCCTerminal implements jTPCCConfig, Runnable {
 		return result;
 	}
 
-	private int deliveryTransaction(int w_id, int o_carrier_id, Boolean cleanup) {
+	private int deliveryTransaction(int w_id, int o_carrier_id, boolean cleanup) {
 		int d_id, no_o_id, c_id;
 		float ol_total;
 		int[] orderIDs;
