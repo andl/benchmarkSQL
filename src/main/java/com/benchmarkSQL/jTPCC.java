@@ -60,6 +60,9 @@ public class jTPCC implements jTPCCConfig {
 
 	//factor
 	private float factor;
+	
+	//
+	private int cycletime;
 
 	/**
 	 * Start benchmarksql benchmark.
@@ -76,8 +79,10 @@ public class jTPCC implements jTPCCConfig {
 	 *            <li>-m: Number of minutes to execute the benchmark for (default=1).</li>
 	 *            <li>-silent: Use this to disable messages to System.out for every set of rows inserted.</li>
 	 *            <li>-stdout: Write standard out to file (takes up Mb of disk space for each run).</li>
+	 *            <li></li>
 	 *            <li>-f: factor less than one, so we can have smaller test.</li>
 	 *            <li>-d: delivery weight, default is 4 </li>
+	 *            <li>-C: cycle time</li>
 	 *            </ul>
 	 */
 	public static void main(String args[]) {
@@ -90,6 +95,7 @@ public class jTPCC implements jTPCCConfig {
 		float factor = 1.0f;
 		boolean writeStandardOutToFile = true;
 		int delivery_weight = defaultDeliveryWeight;
+		int cycle_time = 0;
 
 		for (int i = 0; i < args.length; i++) {
 			String str = args[i];
@@ -112,6 +118,8 @@ public class jTPCC implements jTPCCConfig {
 
 			} else if (str.toLowerCase().startsWith("-c")) {
 				configInfo = args[i].substring("-c".length());
+			} else if (str.toLowerCase().startsWith("-C")) {
+				cycle_time = Integer.parseInt(args[i].substring("-C".length()));
 			} else if (str.toLowerCase().startsWith("-h")) {
 				hotStart = args[i].substring("-h".length());
 			} else if (str.toLowerCase().startsWith("-m")) { // number of minutes to execute transactions for.
@@ -133,11 +141,11 @@ public class jTPCC implements jTPCCConfig {
 			} else if (str.toLowerCase().startsWith("-stdout")) { // number of minutes to execute transactions for.
 
 				writeStandardOutToFile = true;
-		}
+			}
 		}
 
 		jTPCC benchmark = new jTPCC(logFileLocation, numWarehouses, numTerminals, minutesToExecute,
-				numberOfReplicas, writeStandardOutToFile, factor, delivery_weight);
+				numberOfReplicas, writeStandardOutToFile, factor, delivery_weight, cycle_time);
 
 		try {
 			benchmark.run();
@@ -148,7 +156,7 @@ public class jTPCC implements jTPCCConfig {
 	}
 
 	public jTPCC(String logFileLocation, int numWarehouses, int numTerminals, int minutes, int numberOfReplicas, boolean writeStandardOutToFile,
-			float factor, int delivery_weight) {
+			float factor, int delivery_weight, int cycletime) {
 
 		this.factor = factor;
 		this.numWarehouses = numWarehouses;
@@ -188,7 +196,7 @@ public class jTPCC implements jTPCCConfig {
 		orderStatusWeight = defaultOrderStatusWeight;
 		deliveryWeight = delivery_weight;
 		stockLevelWeight = defaultStockLevelWeight;
-
+		this.cycletime = cycletime;
 
 
 	}
@@ -407,7 +415,7 @@ public class jTPCC implements jTPCCConfig {
 
 					jTPCCTerminal terminal = new jTPCCTerminal(terminalName, terminalWarehouseID, terminalDistrictID, conn,
 							transactionsPerTerminal, normalOutput, debugMessages, paymentWeight, orderStatusWeight, deliveryWeight,
-							stockLevelWeight, numWarehouses, this, errorOutput, writeStandardOutToFile,factor);
+							stockLevelWeight, numWarehouses, this, errorOutput, writeStandardOutToFile,factor, cycletime);
 					terminals[i] = terminal;
 					terminalNames[i] = terminalName;
 					printMessage(terminalName + "\t" + terminalWarehouseID);

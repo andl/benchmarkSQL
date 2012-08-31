@@ -108,5 +108,44 @@ public class jTPCCUtil implements jTPCCConfig
     {
         return (((randomNumber(0, x, r) | randomNumber(min, max, r)) + randomNumber(0, x, r)) % (max-min+1)) + min;
     }
+    
+    /**
+     * NegativeExceponential 
+     * 
+     * @param cycleMin
+     * @param cycleMean
+     * @param cycleMax
+     * @param random
+     * @param truncate
+     * @return
+     */
+    public static long getDelaySeconds(int cycleMin, int cycleMean, int cycleMax, Random random, boolean truncate) {
+    	long delay = 0;
+    	long mean = cycleMean;
+    	long shift = 0;
+
+    	if (!truncate) {
+    		shift = cycleMin;
+    		mean -= shift;
+    	}   
+
+    	if (cycleMean > 0) {
+    		double x = drandom(0.0, 1.0, random);
+    		if (x == 0) {
+    			x = 1e-20d;
+    		}   
+    		delay = shift + (long)(mean * -Math.log(x));
+    		if (delay < cycleMin) {
+    			delay = cycleMin;
+    		} else if (delay > cycleMax) {
+    			delay = cycleMax;
+    		}   
+    	}   
+    	return delay;
+    }   
+
+    public static double drandom(double x, double y, Random r) {
+    	return (x + (r.nextDouble() * (y - x)));
+    }
 
 } // end jTPCCUtil 

@@ -83,11 +83,14 @@ public class jTPCCTerminal implements jTPCCConfig, Runnable {
 
 	// factor
 	private float factor = 1.0f;
+	
+	//
+	private int cycletime = 0;
 
 	public jTPCCTerminal(String terminalName, int terminalWarehouseID, int terminalDistrictID, Connection conn, int numTransactions,
 			OutputStream terminalOutput, boolean debugMessages, int paymentWeight, int orderStatusWeight, int deliveryWeight,
 			int stockLevelWeight, int numWarehouses, jTPCC parent, OutputStream errorOutput, boolean writeStandardOutToFile,
-			float factor
+			float factor, int cycletime
 			) throws SQLException {
 		this.terminalName = terminalName;
 		this.conn = conn;
@@ -112,6 +115,7 @@ public class jTPCCTerminal implements jTPCCConfig, Runnable {
 		this.stockLevelWeight = stockLevelWeight;
 		this.numWarehouses = numWarehouses;
 		this.newOrderCounter = 0;
+		this.cycletime = cycletime;
 		terminalMessage("Terminal \'" + terminalName + "\' has WarehouseID=" + terminalWarehouseID + " and DistrictID="
 				+ terminalDistrictID + ".");
 		this.factor = factor;
@@ -148,7 +152,7 @@ public class jTPCCTerminal implements jTPCCConfig, Runnable {
 		printMessage("Finishing current transaction before exit...");
 	}
 
-	private void executeTransactions(int numTransactions) {
+	private void executeTransactions(int numTransactions) throws InterruptedException {
 		boolean stopRunning = false;
 
 		if (numTransactions != -1)
@@ -183,17 +187,33 @@ public class jTPCCTerminal implements jTPCCConfig, Runnable {
 			}
 
 			long transactionEnd = System.currentTimeMillis();
+			
+			long trx_time = transactionEnd - transactionStart;
 
 			if (!transactionTypeName.equals("Delivery")) {
-				parent.signalTerminalEndedTransaction(this.terminalName, transactionTypeName, transactionEnd - transactionStart, null,
+				parent.signalTerminalEndedTransaction(this.terminalName, transactionTypeName, trx_time, null,
 						newOrder);
 			} else {
-				parent.signalTerminalEndedTransaction(this.terminalName, transactionTypeName, transactionEnd - transactionStart,
+				parent.signalTerminalEndedTransaction(this.terminalName, transactionTypeName, trx_time,
 						(skippedDeliveries == 0 ? "None" : "" + skippedDeliveries + " delivery(ies) skipped."), newOrder);
 			}
 
 			if (stopRunningSignal)
 				stopRunning = true;
+			
+			if(cycletime != 0) {
+				int real_cycletime = (int) (jTPCCUtil.getDelaySeconds(
+						(int)(cycletime * 0.6),
+						cycletime,
+						cycletime * 3,
+						gen,
+						true) * 1000);
+				
+				long sleeptime = real_cycletime - trx_time;
+				if (sleeptime > 0) {
+					Thread.sleep(sleeptime); 
+				}	
+			}
 		}
 	}
 
