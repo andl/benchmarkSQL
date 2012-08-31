@@ -5,3 +5,8 @@
 *.ear
 target
 benchmark-results
+
+#eclipse related
+.classpath
+.project
+.settings

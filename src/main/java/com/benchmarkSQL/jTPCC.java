@@ -77,6 +77,7 @@ public class jTPCC implements jTPCCConfig {
 	 *            <li>-silent: Use this to disable messages to System.out for every set of rows inserted.</li>
 	 *            <li>-stdout: Write standard out to file (takes up Mb of disk space for each run).</li>
 	 *            <li>-f: factor less than one, so we can have smaller test.</li>
+	 *            <li>-d: delivery weight, default is 4 </li>
 	 *            </ul>
 	 */
 	public static void main(String args[]) {
@@ -88,11 +89,12 @@ public class jTPCC implements jTPCCConfig {
 		int numberOfReplicas = -1;
 		float factor = 1.0f;
 		boolean writeStandardOutToFile = true;
+		int delivery_weight = defaultDeliveryWeight;
 
 		for (int i = 0; i < args.length; i++) {
 			String str = args[i];
 			if (str.toLowerCase().startsWith("-w")) { // number of warehouses.
-				String val = args[i].substring("-t".length());
+				String val = args[i].substring("-w".length());
 				System.out.println("Setting the number of warehouses to: " + val);
 				numWarehouses = Integer.parseInt(val);
 			}
@@ -125,13 +127,17 @@ public class jTPCC implements jTPCCConfig {
 				if (factor > 1) {
 					factor = 1.0f;
 				}
-			}else if (str.toLowerCase().startsWith("-stdout")) { // number of minutes to execute transactions for.
+			} else if (str.toLowerCase().startsWith("-d")) { // delivery weight;
+				delivery_weight = Integer.parseInt(args[i].substring("-d".length()));
+				System.out.println("Set the delivery transaction weight of to: " + delivery_weight);
+			} else if (str.toLowerCase().startsWith("-stdout")) { // number of minutes to execute transactions for.
 
 				writeStandardOutToFile = true;
 		}
 		}
 
-		jTPCC benchmark = new jTPCC(logFileLocation, numWarehouses, numTerminals, minutesToExecute, numberOfReplicas, writeStandardOutToFile, factor);
+		jTPCC benchmark = new jTPCC(logFileLocation, numWarehouses, numTerminals, minutesToExecute,
+				numberOfReplicas, writeStandardOutToFile, factor, delivery_weight);
 
 		try {
 			benchmark.run();
@@ -142,7 +148,7 @@ public class jTPCC implements jTPCCConfig {
 	}
 
 	public jTPCC(String logFileLocation, int numWarehouses, int numTerminals, int minutes, int numberOfReplicas, boolean writeStandardOutToFile,
-			float factor) {
+			float factor, int delivery_weight) {
 
 		this.factor = factor;
 		this.numWarehouses = numWarehouses;
@@ -180,7 +186,7 @@ public class jTPCC implements jTPCCConfig {
 
 		paymentWeight = defaultPaymentWeight;
 		orderStatusWeight = defaultOrderStatusWeight;
-		deliveryWeight = defaultDeliveryWeight;
+		deliveryWeight = delivery_weight;
 		stockLevelWeight = defaultStockLevelWeight;
 
 
