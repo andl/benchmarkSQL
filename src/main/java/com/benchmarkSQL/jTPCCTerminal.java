@@ -69,6 +69,10 @@ public class jTPCCTerminal implements jTPCCConfig, Runnable {
 	private PreparedStatement delivUpdateDeliveryDate = null;
 	private PreparedStatement delivSumOrderAmount = null;
 	private PreparedStatement delivUpdateCustBalDelivCnt = null;
+	// cleanup
+	private PreparedStatement delivDeleteOOrder = null;
+	private PreparedStatement delivDeleteOrderLines = null;
+
 
 	// Stock Level Txn
 	private PreparedStatement stockGetDistOrderId = null;
@@ -298,7 +302,11 @@ public class jTPCCTerminal implements jTPCCConfig, Runnable {
 			int orderCarrierID = jTPCCUtil.randomNumber(1, 10, gen);
 
 			terminalMessage("\nStarting transaction #" + transactionCount + " (Delivery)...");
-			result = deliveryTransaction(terminalWarehouseID, orderCarrierID);
+			// for smaller scale test, we'd like to delete some of the order record after delivery.
+			// use factor to control the possibility. Example, factor = 0.1 means 90% of order will be removed.
+			Boolean cleanup = false;
+			if (gen.nextDouble() > factor) { cleanup = true; }
+			result = deliveryTransaction(terminalWarehouseID, orderCarrierID, cleanup);
 			break;
 
 		default:
@@ -310,7 +318,7 @@ public class jTPCCTerminal implements jTPCCConfig, Runnable {
 		return result;
 	}
 
-	private int deliveryTransaction(int w_id, int o_carrier_id) {
+	private int deliveryTransaction(int w_id, int o_carrier_id, Boolean cleanup) {
 		int d_id, no_o_id, c_id;
 		float ol_total;
 		int[] orderIDs;
@@ -428,6 +436,34 @@ public class jTPCCTerminal implements jTPCCConfig, Runnable {
 					delivUpdateCustBalDelivCnt.setInt(4, w_id);
 					result = delivUpdateCustBalDelivCnt.executeUpdate();
 
+					if(cleanup) {
+						if(delivDeleteOrderLines ==null) {
+							delivDeleteOrderLines = conn.prepareStatement(
+									"DELETE FROM order_line " +
+									"WHERE ol_o_id =?");
+						}
+						delivDeleteOrderLines.setInt(1, no_o_id);
+						result = delivDeleteOrderLines.executeUpdate();
+						if (result > 0) {
+							terminalMessage("Clean up "+ result + " order_lines belongs to order "+ no_o_id);
+						}else {
+							terminalMessage("Failed to cleanup order_lines belongs to order "+ no_o_id);
+						}
+							
+						if(delivDeleteOOrder == null){
+							delivDeleteOOrder = conn.prepareStatement(
+									"DELETE FROM oorder " +
+									"WHERE o_id = ?");
+						}
+						delivDeleteOOrder.setInt(1, no_o_id);
+						result = delivDeleteOrderLines.executeUpdate();
+						if (result > 0) {
+							terminalMessage("Clean up order "+ no_o_id);
+						}else {
+							terminalMessage("Failed to cleanup order "+ no_o_id);
+						}
+					}
+							
 					if (result == 0)
 						throw new Exception("C_ID=" + c_id + " C_W_ID=" + w_id + " C_D_ID=" + d_id + " not found!");
 				}
