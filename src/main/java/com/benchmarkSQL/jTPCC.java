@@ -62,7 +62,7 @@ public class jTPCC implements jTPCCConfig {
 	private float factor;
 	
 	//
-	private int cycletime;
+	private long cycletime;
 
 	/**
 	 * Start benchmarksql benchmark.
@@ -82,7 +82,7 @@ public class jTPCC implements jTPCCConfig {
 	 *            <li></li>
 	 *            <li>-f: factor less than one, so we can have smaller test.</li>
 	 *            <li>-d: delivery weight, default is 4 </li>
-	 *            <li>-C: cycle time</li>
+	 *            <li>-q: cycle time in ms</li>
 	 *            </ul>
 	 */
 	public static void main(String args[]) {
@@ -95,7 +95,7 @@ public class jTPCC implements jTPCCConfig {
 		float factor = 1.0f;
 		boolean writeStandardOutToFile = true;
 		int delivery_weight = defaultDeliveryWeight;
-		int cycle_time = 0;
+		long cycletime = 0;
 
 		for (int i = 0; i < args.length; i++) {
 			String str = args[i];
@@ -118,8 +118,9 @@ public class jTPCC implements jTPCCConfig {
 
 			} else if (str.toLowerCase().startsWith("-c")) {
 				configInfo = args[i].substring("-c".length());
-			} else if (str.toLowerCase().startsWith("-C")) {
-				cycle_time = Integer.parseInt(args[i].substring("-C".length()));
+			} else if (str.toLowerCase().startsWith("-q")) {
+				cycletime = Long.parseLong(args[i].substring("-q".length()));
+                                System.out.println("Setting the cycle time to: " + cycletime + "ms");
 			} else if (str.toLowerCase().startsWith("-h")) {
 				hotStart = args[i].substring("-h".length());
 			} else if (str.toLowerCase().startsWith("-m")) { // number of minutes to execute transactions for.
@@ -130,11 +131,11 @@ public class jTPCC implements jTPCCConfig {
 
 				numberOfReplicas = Integer.parseInt(args[i].substring("-r".length()));
 			} else if (str.toLowerCase().startsWith("-f")) { // number of minutes to execute transactions for.
-
 				factor = Float.parseFloat(args[i].substring("-f".length()));
 				if (factor > 1) {
 					factor = 1.0f;
 				}
+                                System.out.println("SEtting the number of scaling factor to:" + factor);
 			} else if (str.toLowerCase().startsWith("-d")) { // delivery weight;
 				delivery_weight = Integer.parseInt(args[i].substring("-d".length()));
 				System.out.println("Set the delivery transaction weight of to: " + delivery_weight);
@@ -145,7 +146,7 @@ public class jTPCC implements jTPCCConfig {
 		}
 
 		jTPCC benchmark = new jTPCC(logFileLocation, numWarehouses, numTerminals, minutesToExecute,
-				numberOfReplicas, writeStandardOutToFile, factor, delivery_weight, cycle_time);
+				numberOfReplicas, writeStandardOutToFile, factor, delivery_weight, cycletime);
 
 		try {
 			benchmark.run();
@@ -156,7 +157,7 @@ public class jTPCC implements jTPCCConfig {
 	}
 
 	public jTPCC(String logFileLocation, int numWarehouses, int numTerminals, int minutes, int numberOfReplicas, boolean writeStandardOutToFile,
-			float factor, int delivery_weight, int cycletime) {
+			float factor, int delivery_weight, long cycletime) {
 
 		this.factor = factor;
 		this.numWarehouses = numWarehouses;

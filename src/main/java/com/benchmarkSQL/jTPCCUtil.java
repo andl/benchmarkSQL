@@ -112,14 +112,14 @@ public class jTPCCUtil implements jTPCCConfig
     /**
      * NegativeExceponential 
      * 
-     * @param cycleMin
-     * @param cycleMean
-     * @param cycleMax
+     * @param cycleMin in nanosec
+     * @param cycleMean in nanosec
+     * @param cycleMax in nanosec
      * @param random
      * @param truncate
      * @return
      */
-    public static long getDelaySeconds(int cycleMin, int cycleMean, int cycleMax, Random random, boolean truncate) {
+    public static long getDelay(long cycleMin, long cycleMean, long cycleMax, Random random, boolean truncate) {
     	long delay = 0;
     	long mean = cycleMean;
     	long shift = 0;

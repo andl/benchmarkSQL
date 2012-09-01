@@ -85,12 +85,14 @@ public class jTPCCTerminal implements jTPCCConfig, Runnable {
 	private float factor = 1.0f;
 	
 	//
-	private int cycletime = 0;
+	private long cyclemean = 0;
+        private long cyclemin = 0;
+        private long cyclemax = 0;
 
 	public jTPCCTerminal(String terminalName, int terminalWarehouseID, int terminalDistrictID, Connection conn, int numTransactions,
 			OutputStream terminalOutput, boolean debugMessages, int paymentWeight, int orderStatusWeight, int deliveryWeight,
 			int stockLevelWeight, int numWarehouses, jTPCC parent, OutputStream errorOutput, boolean writeStandardOutToFile,
-			float factor, int cycletime
+			float factor, long cycle_mean
 			) throws SQLException {
 		this.terminalName = terminalName;
 		this.conn = conn;
@@ -115,7 +117,9 @@ public class jTPCCTerminal implements jTPCCConfig, Runnable {
 		this.stockLevelWeight = stockLevelWeight;
 		this.numWarehouses = numWarehouses;
 		this.newOrderCounter = 0;
-		this.cycletime = cycletime;
+		this.cyclemean = cycle_mean * 1000000L; // in nano secondds
+                this.cyclemin = (long) (this.cyclemean * 0.6);
+                this.cyclemax = (long) this.cyclemean * 5;
 		terminalMessage("Terminal \'" + terminalName + "\' has WarehouseID=" + terminalWarehouseID + " and DistrictID="
 				+ terminalDistrictID + ".");
 		this.factor = factor;
@@ -201,18 +205,21 @@ public class jTPCCTerminal implements jTPCCConfig, Runnable {
 			if (stopRunningSignal)
 				stopRunning = true;
 			
-			if(cycletime != 0) {
-				int real_cycletime = (int) (jTPCCUtil.getDelaySeconds(
-						(int)(cycletime * 0.6),
-						cycletime,
-						cycletime * 3,
+			if(cyclemean != 0) {
+                                long fake_time = System.currentTimeMillis() - transactionStart;
+				long real_cycletime = (long) (jTPCCUtil.getDelay(
+						this.cyclemin,
+						this.cyclemean,
+						this.cyclemax,
 						gen,
-						true) * 1000);
+						false) / 1000000L); // in mili-seconds
 				
 				long sleeptime = real_cycletime - trx_time;
 				if (sleeptime > 0) {
+                                        terminalMessage("\ncycle time "+real_cycletime+" "+sleeptime+" "+fake_time+" ms\n");
 					Thread.sleep(sleeptime); 
-				}	
+				}
+
 			}
 		}
 	}
