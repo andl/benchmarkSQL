@@ -234,6 +234,7 @@ public class jTPCC implements jTPCCConfig {
 	}
 
 	private void writeResultToResultsFile(String executingDatabaseName, int timeOfTestSeconds, long numberOfExecutedTransactions) {
+		
 		String resultsFolderPath = logFileLocation + "benchmark-results" + File.separator + "results-summary";
 
 		// Create folder if it doesn't exist.
@@ -284,11 +285,14 @@ public class jTPCC implements jTPCCConfig {
 
 	public void createTraceOutputFolders() {
 		try {
-
+			String pathToResults = logFileLocation;
 			startTime = new Date();
-
-			String pathToResults = logFileLocation + "benchmark-results" + File.separator + dateFormatter.format(startTime);
-			System.out.println("Path to results: " + pathToResults);
+			
+			if (logFileLocation.equalsIgnoreCase("")) {
+				pathToResults = logFileLocation + "benchmark-results"
+						+ File.separator + dateFormatter.format(startTime);
+				System.out.println("Path to results: " + pathToResults);
+			} 
 
 			File f = new File(pathToResults);
 			f.mkdirs();
