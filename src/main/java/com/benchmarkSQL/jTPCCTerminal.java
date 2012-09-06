@@ -218,6 +218,8 @@ public class jTPCCTerminal implements jTPCCConfig, Runnable {
 				if (sleeptime > 0) {
                                         terminalMessage("\ncycle time "+real_cycletime+" "+sleeptime+" "+fake_time+" ms\n");
 					Thread.sleep(sleeptime); 
+				} else {
+					terminalMessage("\ncycle time "+trx_time+" "+ "0" +" "+fake_time+" ms\n");
 				}
 
 			}
